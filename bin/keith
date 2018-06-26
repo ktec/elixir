@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Watch and compile individual files.
+#
+# Author: ktec
+
+set -o errexit # abort on nonzero exitstatus
+set -o nounset # abort on unbound variable
+
+usage() {
+cat <<EOF
+Usage:
+  ${0} watch
+  ${0} compile
+EOF
+}
+
+watch() {
+while sleep 1;
+  do find $1 -name '*.ex' | entr -d ${0} compile /_ ;
+done
+}
+
+# To compile an individual file use:
+# bin/elixirc lib/mix/lib/mix/dep/converger.ex -o lib/mix/ebin/
+compile() {
+  echo "Compiling... $1"
+  case "$1" in
+    *"/lib/eex"*)     bin/elixirc $1 -o lib/eex/ebin;;
+    *"/lib/elixir"*)  bin/elixirc $1 -o lib/elixir/ebin;;
+    *"/lib/ex_unit"*) bin/elixirc $1 -o lib/ex_unit/ebin;;
+    *"/lib/iex"*)     bin/elixirc $1 -o lib/iex/ebin;;
+    *"/lib/logger"*)  bin/elixirc $1 -o lib/logger/ebin;;
+    *"/lib/mix"*)     bin/elixirc $1 -o lib/mix/ebin;;
+    *) echo "Unmatched project";;
+  esac
+}
+
+if [ "$#" -eq "0" ]; then
+  usage
+  exit 2
+fi
+
+case "$1" in
+  "-h") usage;;
+  "watch") watch $2;;
+  "compile") compile $2;;
+  *) usage;;
+esac
